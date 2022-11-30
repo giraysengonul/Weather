@@ -6,8 +6,13 @@
 //
 
 import UIKit
+protocol SearchStackViewDelegate: AnyObject {
+    func didFetchWeather(_ searchStackView: SearchStackView, weatherModel: WeatherModel)
+    func didFailWithError(_ searchStackView: SearchStackView, error: ServiceError)
+}
 class SearchStackView: UIStackView {
      // MARK: - Properties
+    weak var delegate: SearchStackViewDelegate?
     private let locationButton = UIButton(type: .system)
     private let searchTextField = UITextField()
     private let searchButton = UIButton(type: .system)
@@ -47,6 +52,7 @@ extension SearchStackView{
         searchTextField.borderStyle = .roundedRect
         searchTextField.textAlignment = .right
         searchTextField.backgroundColor = .systemFill
+        searchTextField.delegate = self
     }
     private func layout(){
         addArrangedSubview(locationButton)
@@ -66,13 +72,34 @@ extension SearchStackView{
  // MARK: - Selector
 extension SearchStackView{
     @objc private func handleSearchButton(_ sender: UIButton){
-        service.fetchWeather(forCityName: "london") { result in
-            switch result{
-            case .success(let result):
-                print(result.main.temp)
-            case .failure(_):
-                print("Error")
-            }
+        self.searchTextField.endEditing(true)
+    }
+}
+ // MARK: - UITextFieldDelegate
+extension SearchStackView: UITextFieldDelegate{
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        return self.searchTextField.endEditing(true)
+    }
+    func textFieldShouldEndEditing(_ textField: UITextField) -> Bool {
+        if searchTextField.text != ""{
+            return true
+        }else{
+            searchTextField.placeholder = "Search"
+            return false
         }
     }
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        guard let cityName = searchTextField.text else { return  }
+        service.fetchWeather(forCityName: cityName) { result in
+            switch result{
+            case .success(let result):
+                self.delegate?.didFetchWeather(self, weatherModel: result)
+            case .failure(let error):
+                self.delegate?.didFailWithError(self, error: error)
+            }
+        }
+        self.searchTextField.text = ""
+    }
+    
 }
