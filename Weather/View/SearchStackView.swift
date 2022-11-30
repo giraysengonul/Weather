@@ -9,15 +9,16 @@ import UIKit
 protocol SearchStackViewDelegate: AnyObject {
     func didFetchWeather(_ searchStackView: SearchStackView, weatherModel: WeatherModel)
     func didFailWithError(_ searchStackView: SearchStackView, error: ServiceError)
+    func updatingLocation(_ searchStackView: SearchStackView)
 }
 class SearchStackView: UIStackView {
-     // MARK: - Properties
+    // MARK: - Properties
     weak var delegate: SearchStackViewDelegate?
     private let locationButton = UIButton(type: .system)
     private let searchTextField = UITextField()
     private let searchButton = UIButton(type: .system)
     private let service = WeatherService()
-     // MARK: - Lifecycle
+    // MARK: - Lifecycle
     override init(frame: CGRect) {
         super.init(frame: frame)
         style()
@@ -27,7 +28,7 @@ class SearchStackView: UIStackView {
         fatalError("init(coder:) has not been implemented")
     }
 }
- // MARK: - Helpers
+// MARK: - Helpers
 extension SearchStackView{
     private func style(){
         //locationButton style
@@ -37,6 +38,7 @@ extension SearchStackView{
         locationButton.layer.cornerRadius = 40 / 2
         locationButton.contentVerticalAlignment = .fill
         locationButton.contentHorizontalAlignment = .fill
+        locationButton.addTarget(self, action: #selector(handleLocationButton), for: .touchUpInside)
         //searchButton style
         searchButton.translatesAutoresizingMaskIntoConstraints = false
         searchButton.setImage(UIImage(systemName: "magnifyingglass"), for: .normal)
@@ -69,13 +71,16 @@ extension SearchStackView{
         ])
     }
 }
- // MARK: - Selector
+// MARK: - Selector
 extension SearchStackView{
     @objc private func handleSearchButton(_ sender: UIButton){
         self.searchTextField.endEditing(true)
     }
+    @objc private func handleLocationButton(_ sender: UIButton){
+        self.delegate?.updatingLocation(self)
+    }
 }
- // MARK: - UITextFieldDelegate
+// MARK: - UITextFieldDelegate
 extension SearchStackView: UITextFieldDelegate{
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -91,7 +96,7 @@ extension SearchStackView: UITextFieldDelegate{
     }
     func textFieldDidEndEditing(_ textField: UITextField) {
         guard let cityName = searchTextField.text else { return  }
-        service.fetchWeather(forCityName: cityName) { result in
+        service.fetchWeatherCityName(forCityName: cityName) { result in
             switch result{
             case .success(let result):
                 self.delegate?.didFetchWeather(self, weatherModel: result)
