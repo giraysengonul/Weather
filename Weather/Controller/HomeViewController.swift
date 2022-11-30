@@ -9,6 +9,9 @@ import UIKit
 import CoreLocation
 class HomeViewController: UIViewController {
     // MARK: - Properties
+    var viewModel: WeatherViewModel?{
+        didSet{ configure() }
+    }
     private let backgroundImageView = UIImageView()
     private let mainStackView = UIStackView()
     private let searchStackView = SearchStackView()
@@ -93,6 +96,12 @@ extension HomeViewController{
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
         locationManager.delegate = self
     }
+    private func configure(){
+        guard let viewModel = self.viewModel else { return }
+        self.cityLabel.text = viewModel.cityName
+        self.temperatureLabel.attributedText = attributedText(with: viewModel.temperatureString!)
+        self.statusImageView.image = UIImage(systemName: viewModel.statusName)
+    }
 
 }
  // MARK: - CLLocationManagerDelegate
@@ -115,6 +124,6 @@ extension HomeViewController: SearchStackViewDelegate{
         }
     }
     func didFetchWeather(_ searchStackView: SearchStackView, weatherModel: WeatherModel) {
-        print(weatherModel.main.temp)
+        self.viewModel = WeatherViewModel(weatherModel: weatherModel)
     }
 }
