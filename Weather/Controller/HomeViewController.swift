@@ -103,6 +103,19 @@ extension HomeViewController{
         self.temperatureLabel.attributedText = attributedText(with: viewModel.temperatureString!)
         self.statusImageView.image = UIImage(systemName: viewModel.statusName)
     }
+    private func showErrorAlert(forErrorMessage message: String){
+        let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        self.present(alert, animated: true)
+    }
+    private func parseError(error: ServiceError){
+        switch error{
+        case .serverError:
+            showErrorAlert(forErrorMessage: error.rawValue)
+        case .decodingError:
+            showErrorAlert(forErrorMessage: error.rawValue)
+        }
+    }
     
 }
 // MARK: - CLLocationManagerDelegate
@@ -115,7 +128,7 @@ extension HomeViewController: CLLocationManagerDelegate{
             case .success(let result):
                 self.viewModel = WeatherViewModel(weatherModel: result)
             case .failure(let error):
-                print(error.localizedDescription)
+                self.parseError(error: error)
             }
         }
     }
@@ -126,12 +139,7 @@ extension HomeViewController: SearchStackViewDelegate{
         self.locationManager.startUpdatingLocation()
     }
     func didFailWithError(_ searchStackView: SearchStackView, error: ServiceError) {
-        switch error{
-        case .serverError:
-            print("server error")
-        case .decodingError:
-            print("decoding error")
-        }
+        parseError(error: error)
     }
     func didFetchWeather(_ searchStackView: SearchStackView, weatherModel: WeatherModel) {
         self.viewModel = WeatherViewModel(weatherModel: weatherModel)

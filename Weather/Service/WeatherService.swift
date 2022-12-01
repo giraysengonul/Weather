@@ -7,9 +7,9 @@
 
 import Foundation
 import CoreLocation
-enum ServiceError: Error {
-    case serverError
-    case decodingError
+enum ServiceError:String ,Error {
+    case serverError = "Check your network connection"
+    case decodingError = "Decoding Error"
 }
 
 struct WeatherService {
